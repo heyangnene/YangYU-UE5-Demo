@@ -1,0 +1,34 @@
+# Unreal Engine generated folders
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+
+# Visual Studio / Rider
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/
+.idea/
+
+# Build outputs
+*.log
+*.tmp
+*.obj
+*.pdb
+*.ilk
+*.exe
+*.dll
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Unreal local files
+*.VC.db
+*.opensdf
+*.sdf
+
+# Keep source, config, content and uproject
