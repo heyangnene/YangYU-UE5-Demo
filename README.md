@@ -6,7 +6,7 @@ YangYu is a sci-fi survival demo made with Unreal Engine 5.
 
 
 
-The current version is a single-player greybox prototype.  
+The current version is a single-player greybox prototype.
 
 The player protects and repairs a core while enemies continuously attack it.
 
@@ -31,6 +31,10 @@ The player protects and repairs a core while enemies continuously attack it.
 \- Core repair interaction with E key
 
 \- Core health UI
+
+\- Gameplay instruction HUD
+
+\- Core damage flash feedback when the core is damaged
 
 \- Mission Failed condition when the core is destroyed
 
