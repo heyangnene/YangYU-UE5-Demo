@@ -19,6 +19,7 @@ AYYEnemyBase::AYYEnemyBase()
 	CollisionBox->SetCollisionObjectType(ECC_Pawn);
 	CollisionBox->SetCollisionResponseToAllChannels(ECR_Block);
 
+	// Avoid enemies blocking or pushing the player / each other too aggressively.
 	CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 	EnemyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EnemyMesh"));
@@ -40,12 +41,7 @@ void AYYEnemyBase::BeginPlay()
 	}
 
 	FindCoreTarget();
-
-	if (!TargetActor)
-	{
-		TargetActor = UGameplayStatics::GetPlayerPawn(this, 0);
-	}
-
+	FindPlayerTarget();
 	GenerateTargetOffset();
 }
 
@@ -63,6 +59,11 @@ void AYYEnemyBase::Tick(float DeltaTime)
 		}
 	}
 
+	if (!PlayerTargetActor)
+	{
+		FindPlayerTarget();
+	}
+
 	MoveToTarget(DeltaTime);
 	TryAttackTarget(DeltaTime);
 }
@@ -70,6 +71,11 @@ void AYYEnemyBase::Tick(float DeltaTime)
 void AYYEnemyBase::FindCoreTarget()
 {
 	TargetActor = UGameplayStatics::GetActorOfClass(this, AYYCoreObjective::StaticClass());
+}
+
+void AYYEnemyBase::FindPlayerTarget()
+{
+	PlayerTargetActor = UGameplayStatics::GetPlayerPawn(this, 0);
 }
 
 void AYYEnemyBase::GenerateTargetOffset()
@@ -114,9 +120,24 @@ void AYYEnemyBase::MoveToTarget(float DeltaTime)
 	SetActorRotation(FRotator(0.0f, DirectionRotation.Yaw, 0.0f));
 }
 
+AActor* AYYEnemyBase::GetCurrentAttackTarget() const
+{
+	if (PlayerTargetActor)
+	{
+		const float PlayerDistance = FVector::Dist2D(GetActorLocation(), PlayerTargetActor->GetActorLocation());
+
+		if (PlayerDistance <= PlayerAttackDistance)
+		{
+			return PlayerTargetActor;
+		}
+	}
+
+	return TargetActor;
+}
+
 void AYYEnemyBase::TryAttackTarget(float DeltaTime)
 {
-	if (!TargetActor || !HealthComponent || HealthComponent->IsDead())
+	if (!HealthComponent || HealthComponent->IsDead())
 	{
 		return;
 	}
@@ -127,24 +148,67 @@ void AYYEnemyBase::TryAttackTarget(float DeltaTime)
 		return;
 	}
 
-	// 注意：攻击距离仍然以核心真实位置为准，而不是偏移站位点。
-	const float Distance = FVector::Dist2D(GetActorLocation(), TargetActor->GetActorLocation());
+	AActor* AttackTarget = GetCurrentAttackTarget();
 
-	if (Distance > AttackDistance)
+	if (!AttackTarget)
 	{
 		return;
 	}
 
-	UYYHealthComponent* TargetHealthComponent = TargetActor->FindComponentByClass<UYYHealthComponent>();
+	const bool bIsAttackingPlayer = AttackTarget == PlayerTargetActor;
+
+	const float CurrentAttackDistance = bIsAttackingPlayer ? PlayerAttackDistance : AttackDistance;
+	const float CurrentAttackDamage = bIsAttackingPlayer ? PlayerAttackDamage : AttackDamage;
+
+	const float Distance = FVector::Dist2D(GetActorLocation(), AttackTarget->GetActorLocation());
+
+	if (Distance > CurrentAttackDistance)
+	{
+		return;
+	}
+
+	UYYHealthComponent* TargetHealthComponent = nullptr;
+
+	if (bIsAttackingPlayer)
+	{
+		TArray<UYYHealthComponent*> HealthComponents;
+		AttackTarget->GetComponents<UYYHealthComponent>(HealthComponents);
+
+		for (UYYHealthComponent* Component : HealthComponents)
+		{
+			if (Component && Component->GetFName() == TEXT("PlayerHealthComponent"))
+			{
+				TargetHealthComponent = Component;
+				break;
+			}
+		}
+
+		if (!TargetHealthComponent)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Enemy tried to attack player, but PlayerHealthComponent was not found."));
+			return;
+		}
+	}
+	else
+	{
+		TargetHealthComponent = AttackTarget->FindComponentByClass<UYYHealthComponent>();
+	}
 
 	if (!TargetHealthComponent || TargetHealthComponent->IsDead())
 	{
 		return;
 	}
 
-	TargetHealthComponent->ApplyDamage(AttackDamage);
+	TargetHealthComponent->ApplyDamage(CurrentAttackDamage);
 
-	UE_LOG(LogTemp, Warning, TEXT("Enemy attacked target: %.1f damage"), AttackDamage);
+	if (bIsAttackingPlayer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy attacked player: %.1f damage"), CurrentAttackDamage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy attacked core: %.1f damage"), CurrentAttackDamage);
+	}
 
 	AttackCooldown = AttackInterval;
 }
@@ -156,6 +220,6 @@ void AYYEnemyBase::HandleDeath()
 		Destroy();
 		return;
 	}
-
+	
 	SetLifeSpan(DestroyDelay);
 }

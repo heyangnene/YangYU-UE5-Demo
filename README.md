@@ -8,7 +8,7 @@ YangYu is a sci-fi survival demo made with Unreal Engine 5.
 
 The current version is a single-player greybox prototype.
 
-The player protects and repairs a core while enemies continuously attack it.
+The player protects and repairs a core while enemies continuously attack it. The player can also be damaged by enemies and will enter a downed state when health reaches zero.
 
 
 
@@ -26,17 +26,31 @@ The player protects and repairs a core while enemies continuously attack it.
 
 \- Enemies move toward and attack the core
 
+\- Enemies can damage the player when nearby
+
 \- Core health system
+
+\- Player health system
 
 \- Core repair interaction with E key
 
 \- Core health UI
 
+\- Player health UI
+
 \- Gameplay instruction HUD
 
-\- Core damage flash feedback when the core is damaged
+\- Player damage screen flash feedback
+
+\- Core damage feedback through red core glow
+
+\- Player death state with PLAYER DOWN message
+
+\- Death overlay when the player is down
 
 \- Mission Failed condition when the core is destroyed
+
+\- Mission Failed condition when the player is down
 
 \- Mission Success condition after surviving 60 seconds
 
@@ -68,15 +82,19 @@ Current milestone:
 
 
 
-\*\*Demo 0.1 - Core Gameplay Loop\*\*
+\*\*Demo 0.2 - Damage Feedback and Player Death State\*\*
 
 
 
-This version focuses on proving the main gameplay loop:
+This version expands the core gameplay loop with player health, enemy damage to the player, separated damage feedback for the player and the core, and a clear player down state.
 
 
 
-Enemy spawning → Core attack → Player defense → Core repair → Win / Lose condition
+The current loop is:
+
+
+
+Enemy spawning → Core attack → Player defense → Player damage → Core repair → Player down / Core destroyed / Survival success
 
 
 
@@ -86,9 +104,13 @@ Enemy spawning → Core attack → Player defense → Core repair → Win / Lose
 
 \- Long-press repair interaction
 
-\- Enemy attacks on player
+\- Player damage sound effects
 
-\- Player health and death system
+\- Core damage sound effects
+
+\- Low-health player warning feedback
+
+\- Enemy aggro and player-chasing behavior
 
 \- More polished enemy AI with navigation
 
@@ -99,4 +121,10 @@ Enemy spawning → Core attack → Player defense → Core repair → Win / Lose
 \- Extraction objective
 
 \- Multiplayer co-op support for 2–4 players
+
+\- Role-based weapons: pulse weapon, gravity device, and guardian shield/support device
+
+\- Environment, weapon, and enemy visual polish
+
+\- Performance profiling and optimization
 

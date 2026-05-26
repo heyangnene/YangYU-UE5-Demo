@@ -12,7 +12,7 @@ UCLASS()
 class YANGYU_API AYYCoreObjective : public AActor
 {
 	GENERATED_BODY()
-
+	
 public:
 	AYYCoreObjective();
 

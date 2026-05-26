@@ -47,11 +47,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
 	float AttackInterval = 1.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
+	float PlayerAttackDistance = 220.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
+	float PlayerAttackDamage = 15.0f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
 	float AttackCooldown = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Target")
 	AActor* TargetActor = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Target")
+	AActor* PlayerTargetActor = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Target")
 	float TargetOffsetRadius = 220.0f;
@@ -64,12 +73,16 @@ protected:
 
 	void FindCoreTarget();
 
+	void FindPlayerTarget();
+
 	void GenerateTargetOffset();
 
 	void MoveToTarget(float DeltaTime);
 
 	void TryAttackTarget(float DeltaTime);
 
+	AActor* GetCurrentAttackTarget() const;
+	
 public:
 	UFUNCTION(BlueprintPure, Category = "Enemy")
 	UYYHealthComponent* GetHealthComponent() const { return HealthComponent; }
