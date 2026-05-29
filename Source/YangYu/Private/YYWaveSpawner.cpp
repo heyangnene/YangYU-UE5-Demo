@@ -6,10 +6,10 @@
 
 AYYWaveSpawner::AYYWaveSpawner()
 {
-	PrimaryActorTick.bCanEverTick = false;		//不需要每帧更新，所以将bCanEverTick设置为false。
+	PrimaryActorTick.bCanEverTick = false;
 }
 
-void AYYWaveSpawner::BeginPlay()		//当游戏开始生成敌人
+void AYYWaveSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -24,16 +24,18 @@ void AYYWaveSpawner::StartSpawning()
 		return;
 	}
 
-	AliveEnemyCount = 0;		//重置当前存在的敌人数量。
+	AliveEnemyCount = 0;
+	KilledEnemyCount = 0;
+	Score = 0;
 
 	GetWorldTimerManager().SetTimer(
-		SpawnTimerHandle,		//定时器句柄，用于后续控制定时器。
-		this,		//定时器所属对象，即当前的AYYWaveSpawner实例。
-		&AYYWaveSpawner::SpawnEnemy,		//定时器触发时调用的函数，这里是SpawnEnemy函数。
-		SpawnInterval,		//定时器的时间间隔，即每隔SpawnInterval秒调用一次SpawnEnemy函数。
-		true,		
-		0.0f		//表示立即开始生成敌人。
-	);		//设置一个定时器，每隔SpawnInterval秒调用一次SpawnEnemy函数，开始生成敌人。
+		SpawnTimerHandle,
+		this,
+		&AYYWaveSpawner::SpawnEnemy,
+		SpawnInterval,
+		true,
+		0.0f
+	);
 
 	UE_LOG(LogTemp, Warning, TEXT("WaveSpawner started."));
 }
@@ -45,7 +47,7 @@ void AYYWaveSpawner::StopSpawning()
 	UE_LOG(LogTemp, Warning, TEXT("WaveSpawner stopped."));
 }
 
-FVector AYYWaveSpawner::GetRandomSpawnLocation() const		//生成一个随机的生成位置，基于当前生成器的位置和方向。
+FVector AYYWaveSpawner::GetRandomSpawnLocation() const
 {
 	const float RandomAngle = FMath::RandRange(0.0f, 360.0f);
 	const float RandomDistance = FMath::RandRange(0.0f, SpawnRadius);
@@ -83,7 +85,7 @@ void AYYWaveSpawner::SpawnEnemy()
 		const FVector SpawnLocation = GetRandomSpawnLocation();
 		const FRotator SpawnRotation = GetActorRotation();
 
-		AYYEnemyBase* SpawnedEnemy = GetWorld()->SpawnActor<AYYEnemyBase>(		//尝试生成敌人
+		AYYEnemyBase* SpawnedEnemy = GetWorld()->SpawnActor<AYYEnemyBase>(
 			EnemyClass,
 			SpawnLocation,
 			SpawnRotation,
@@ -108,5 +110,16 @@ void AYYWaveSpawner::HandleSpawnedEnemyDestroyed(AActor* DestroyedActor)
 {
 	AliveEnemyCount = FMath::Max(AliveEnemyCount - 1, 0);
 
-	UE_LOG(LogTemp, Warning, TEXT("Enemy destroyed. Alive: %d / %d"), AliveEnemyCount, MaxAliveCount);
+	KilledEnemyCount++;
+	Score += ScorePerEnemy;
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Enemy destroyed. Alive: %d / %d | Kills: %d | Score: %d"),
+		AliveEnemyCount,
+		MaxAliveCount,
+		KilledEnemyCount,
+		Score
+	);
 }

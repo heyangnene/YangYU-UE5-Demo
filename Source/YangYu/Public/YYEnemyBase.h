@@ -53,6 +53,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
 	float PlayerAttackDamage = 15.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Aggro")
+	float PlayerDetectDistance = 600.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Aggro")
+	bool bIsChasingPlayer = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
 	float AttackCooldown = 0.0f;
 
@@ -77,12 +83,18 @@ protected:
 
 	void GenerateTargetOffset();
 
+	void UpdateAggroState();
+
 	void MoveToTarget(float DeltaTime);
 
 	void TryAttackTarget(float DeltaTime);
 
+	AActor* GetCurrentMoveTarget() const;
+
 	AActor* GetCurrentAttackTarget() const;
-	
+
+	UYYHealthComponent* GetPlayerHealthComponent() const;
+
 public:
 	UFUNCTION(BlueprintPure, Category = "Enemy")
 	UYYHealthComponent* GetHealthComponent() const { return HealthComponent; }

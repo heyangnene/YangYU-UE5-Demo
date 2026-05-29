@@ -44,7 +44,13 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 \- Core damage feedback through red core glow
 
+\- Basic enemy aggro behavior: enemies chase nearby players before returning to the core
+
+\- Basic score and kill count system
+
 \- Player death state with PLAYER DOWN message
+
+\- Core destroyed state with CORE DESTROYED message
 
 \- Death overlay when the player is down
 

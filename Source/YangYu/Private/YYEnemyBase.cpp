@@ -64,6 +64,8 @@ void AYYEnemyBase::Tick(float DeltaTime)
 		FindPlayerTarget();
 	}
 
+	UpdateAggroState();
+
 	MoveToTarget(DeltaTime);
 	TryAttackTarget(DeltaTime);
 }
@@ -89,22 +91,112 @@ void AYYEnemyBase::GenerateTargetOffset()
 	);
 }
 
-void AYYEnemyBase::MoveToTarget(float DeltaTime)
+UYYHealthComponent* AYYEnemyBase::GetPlayerHealthComponent() const
 {
-	if (!TargetActor || !HealthComponent || HealthComponent->IsDead())
+	if (!PlayerTargetActor)
+	{
+		return nullptr;
+	}
+
+	TArray<UYYHealthComponent*> HealthComponents;
+	PlayerTargetActor->GetComponents<UYYHealthComponent>(HealthComponents);
+
+	for (UYYHealthComponent* Component : HealthComponents)
+	{
+		if (Component && Component->GetFName() == TEXT("PlayerHealthComponent"))
+		{
+			return Component;
+		}
+	}
+
+	return nullptr;
+}
+
+void AYYEnemyBase::UpdateAggroState()
+{
+	bIsChasingPlayer = false;
+
+	if (!PlayerTargetActor)
 	{
 		return;
 	}
 
+	UYYHealthComponent* PlayerHealthComponent = GetPlayerHealthComponent();
+
+	if (!PlayerHealthComponent || PlayerHealthComponent->IsDead())
+	{
+		return;
+	}
+
+	const float PlayerDistance = FVector::Dist2D(GetActorLocation(), PlayerTargetActor->GetActorLocation());
+
+	if (PlayerDistance <= PlayerDetectDistance)
+	{
+		bIsChasingPlayer = true;
+	}
+}
+
+AActor* AYYEnemyBase::GetCurrentMoveTarget() const
+{
+	if (bIsChasingPlayer && PlayerTargetActor)
+	{
+		return PlayerTargetActor;
+	}
+
+	return TargetActor;
+}
+
+AActor* AYYEnemyBase::GetCurrentAttackTarget() const
+{
+	if (PlayerTargetActor)
+	{
+		UYYHealthComponent* PlayerHealthComponent = GetPlayerHealthComponent();
+
+		if (PlayerHealthComponent && !PlayerHealthComponent->IsDead())
+		{
+			const float PlayerDistance = FVector::Dist2D(GetActorLocation(), PlayerTargetActor->GetActorLocation());
+
+			if (PlayerDistance <= PlayerAttackDistance)
+			{
+				return PlayerTargetActor;
+			}
+		}
+	}
+
+	return TargetActor;
+}
+
+void AYYEnemyBase::MoveToTarget(float DeltaTime)
+{
+	if (!HealthComponent || HealthComponent->IsDead())
+	{
+		return;
+	}
+
+	AActor* MoveTarget = GetCurrentMoveTarget();
+
+	if (!MoveTarget)
+	{
+		return;
+	}
+
+	const bool bMovingToPlayer = MoveTarget == PlayerTargetActor;
+
 	const FVector CurrentLocation = GetActorLocation();
-	const FVector TargetLocation = TargetActor->GetActorLocation() + TargetOffset;
+	const FVector TargetLocation = bMovingToPlayer
+		? MoveTarget->GetActorLocation()
+		: MoveTarget->GetActorLocation() + TargetOffset;
 
 	FVector Direction = TargetLocation - CurrentLocation;
 	Direction.Z = 0.0f;
 
 	const float Distance = Direction.Size();
 
-	if (Distance <= StopDistance)
+	const float CurrentStopDistance = bMovingToPlayer
+		? PlayerAttackDistance * 0.8f
+		: StopDistance;
+
+	if (Distance <= CurrentStopDistance)
 	{
 		return;
 	}
@@ -118,21 +210,6 @@ void AYYEnemyBase::MoveToTarget(float DeltaTime)
 
 	const FRotator DirectionRotation = Direction.Rotation();
 	SetActorRotation(FRotator(0.0f, DirectionRotation.Yaw, 0.0f));
-}
-
-AActor* AYYEnemyBase::GetCurrentAttackTarget() const
-{
-	if (PlayerTargetActor)
-	{
-		const float PlayerDistance = FVector::Dist2D(GetActorLocation(), PlayerTargetActor->GetActorLocation());
-
-		if (PlayerDistance <= PlayerAttackDistance)
-		{
-			return PlayerTargetActor;
-		}
-	}
-
-	return TargetActor;
 }
 
 void AYYEnemyBase::TryAttackTarget(float DeltaTime)
@@ -171,17 +248,7 @@ void AYYEnemyBase::TryAttackTarget(float DeltaTime)
 
 	if (bIsAttackingPlayer)
 	{
-		TArray<UYYHealthComponent*> HealthComponents;
-		AttackTarget->GetComponents<UYYHealthComponent>(HealthComponents);
-
-		for (UYYHealthComponent* Component : HealthComponents)
-		{
-			if (Component && Component->GetFName() == TEXT("PlayerHealthComponent"))
-			{
-				TargetHealthComponent = Component;
-				break;
-			}
-		}
+		TargetHealthComponent = GetPlayerHealthComponent();
 
 		if (!TargetHealthComponent)
 		{
@@ -220,6 +287,6 @@ void AYYEnemyBase::HandleDeath()
 		Destroy();
 		return;
 	}
-	
+
 	SetLifeSpan(DestroyDelay);
 }
