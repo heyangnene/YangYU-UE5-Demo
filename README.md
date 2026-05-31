@@ -60,6 +60,8 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 \- Mission Success condition after surviving 60 seconds
 
+\- Refactored HUD update logic into separate Blueprint events for core, player, score, and mission state.
+
 
 
 \## Controls
