@@ -32,7 +32,7 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 \- Player health system
 
-\- Core repair interaction with E key
+\- Hold E to continuously repair the core
 
 \- Core health UI
 
@@ -109,8 +109,6 @@ Enemy spawning → Core attack → Player defense → Player damage → Core rep
 \## Future Plans
 
 
-
-\- Long-press repair interaction
 
 \- Player damage sound effects
 
