@@ -44,7 +44,36 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Score")
 	int32 ScorePerEnemy = 100;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
+	int32 TotalWaves = 3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
+	int32 Wave1EnemyCount = 5;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
+	int32 Wave2EnemyCount = 7;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
+	int32 Wave3EnemyCount = 10;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
+	float WaveBreakTime = 5.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	int32 CurrentWave = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	int32 SpawnedInCurrentWave = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	int32 KilledInCurrentWave = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	bool bAllWavesCompleted = false;
+
 	FTimerHandle SpawnTimerHandle;
+
+	FTimerHandle WaveBreakTimerHandle;
 
 	void SpawnEnemy();
 
@@ -52,6 +81,12 @@ protected:
 
 	UFUNCTION()
 	void HandleSpawnedEnemyDestroyed(AActor* DestroyedActor);
+
+	void StartNextWave();
+
+	void FinishCurrentWave();
+
+	int32 GetCurrentWaveEnemyCount() const;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Spawner")
@@ -68,4 +103,22 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Spawner")
 	int32 GetAliveEnemyCount() const { return AliveEnemyCount; }
+
+	UFUNCTION(BlueprintPure, Category = "Wave")
+	int32 GetCurrentWave() const { return CurrentWave; }
+
+	UFUNCTION(BlueprintPure, Category = "Wave")
+	int32 GetTotalWaves() const { return TotalWaves; }
+
+	UFUNCTION(BlueprintPure, Category = "Wave")
+	int32 GetSpawnedInCurrentWave() const { return SpawnedInCurrentWave; }
+
+	UFUNCTION(BlueprintPure, Category = "Wave")
+	int32 GetKilledInCurrentWave() const { return KilledInCurrentWave; }
+
+	UFUNCTION(BlueprintPure, Category = "Wave")
+	int32 GetEnemiesInCurrentWave() const { return GetCurrentWaveEnemyCount(); }
+
+	UFUNCTION(BlueprintPure, Category = "Wave")
+	bool AreAllWavesCompleted() const { return bAllWavesCompleted; }
 };

@@ -28,6 +28,48 @@ void AYYWaveSpawner::StartSpawning()
 	KilledEnemyCount = 0;
 	Score = 0;
 
+	CurrentWave = 0;
+	SpawnedInCurrentWave = 0;
+	KilledInCurrentWave = 0;
+	bAllWavesCompleted = false;
+
+	GetWorldTimerManager().ClearTimer(SpawnTimerHandle);
+	GetWorldTimerManager().ClearTimer(WaveBreakTimerHandle);
+
+	StartNextWave();
+
+	UE_LOG(LogTemp, Warning, TEXT("WaveSpawner started."));
+}
+
+void AYYWaveSpawner::StopSpawning()
+{
+	GetWorldTimerManager().ClearTimer(SpawnTimerHandle);
+	GetWorldTimerManager().ClearTimer(WaveBreakTimerHandle);
+
+	UE_LOG(LogTemp, Warning, TEXT("WaveSpawner stopped."));
+}
+
+void AYYWaveSpawner::StartNextWave()
+{
+	if (bAllWavesCompleted)
+	{
+		return;
+	}
+
+	CurrentWave++;
+
+	SpawnedInCurrentWave = 0;
+	KilledInCurrentWave = 0;
+
+	if (CurrentWave > TotalWaves)
+	{
+		bAllWavesCompleted = true;
+		StopSpawning();
+
+		UE_LOG(LogTemp, Warning, TEXT("All waves completed."));
+		return;
+	}
+
 	GetWorldTimerManager().SetTimer(
 		SpawnTimerHandle,
 		this,
@@ -37,14 +79,64 @@ void AYYWaveSpawner::StartSpawning()
 		0.0f
 	);
 
-	UE_LOG(LogTemp, Warning, TEXT("WaveSpawner started."));
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Wave %d / %d started. Enemy Count: %d"),
+		CurrentWave,
+		TotalWaves,
+		GetCurrentWaveEnemyCount()
+	);
 }
 
-void AYYWaveSpawner::StopSpawning()
+void AYYWaveSpawner::FinishCurrentWave()
 {
 	GetWorldTimerManager().ClearTimer(SpawnTimerHandle);
 
-	UE_LOG(LogTemp, Warning, TEXT("WaveSpawner stopped."));
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Wave %d / %d completed."),
+		CurrentWave,
+		TotalWaves
+	);
+
+	if (CurrentWave >= TotalWaves)
+	{
+		bAllWavesCompleted = true;
+		StopSpawning();
+
+		UE_LOG(LogTemp, Warning, TEXT("All waves completed."));
+		return;
+	}
+
+	GetWorldTimerManager().SetTimer(
+		WaveBreakTimerHandle,
+		this,
+		&AYYWaveSpawner::StartNextWave,
+		WaveBreakTime,
+		false
+	);
+}
+
+int32 AYYWaveSpawner::GetCurrentWaveEnemyCount() const
+{
+	if (CurrentWave <= 1)
+	{
+		return Wave1EnemyCount;
+	}
+
+	if (CurrentWave == 2)
+	{
+		return Wave2EnemyCount;
+	}
+
+	if (CurrentWave >= 3)
+	{
+		return Wave3EnemyCount;
+	}
+
+	return Wave1EnemyCount;
 }
 
 FVector AYYWaveSpawner::GetRandomSpawnLocation() const
@@ -66,6 +158,24 @@ void AYYWaveSpawner::SpawnEnemy()
 {
 	if (!EnemyClass)
 	{
+		return;
+	}
+
+	if (bAllWavesCompleted)
+	{
+		return;
+	}
+
+	if (CurrentWave <= 0 || CurrentWave > TotalWaves)
+	{
+		return;
+	}
+
+	const int32 CurrentWaveEnemyCount = GetCurrentWaveEnemyCount();
+
+	if (SpawnedInCurrentWave >= CurrentWaveEnemyCount)
+	{
+		GetWorldTimerManager().ClearTimer(SpawnTimerHandle);
 		return;
 	}
 
@@ -95,10 +205,27 @@ void AYYWaveSpawner::SpawnEnemy()
 		if (SpawnedEnemy)
 		{
 			AliveEnemyCount++;
+			SpawnedInCurrentWave++;
 
 			SpawnedEnemy->OnDestroyed.AddDynamic(this, &AYYWaveSpawner::HandleSpawnedEnemyDestroyed);
 
-			UE_LOG(LogTemp, Warning, TEXT("Enemy spawned. Alive: %d / %d"), AliveEnemyCount, MaxAliveCount);
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT("Enemy spawned. Wave: %d / %d | Spawned: %d / %d | Alive: %d / %d"),
+				CurrentWave,
+				TotalWaves,
+				SpawnedInCurrentWave,
+				CurrentWaveEnemyCount,
+				AliveEnemyCount,
+				MaxAliveCount
+			);
+
+			if (SpawnedInCurrentWave >= CurrentWaveEnemyCount)
+			{
+				GetWorldTimerManager().ClearTimer(SpawnTimerHandle);
+			}
+
 			return;
 		}
 	}
@@ -111,15 +238,30 @@ void AYYWaveSpawner::HandleSpawnedEnemyDestroyed(AActor* DestroyedActor)
 	AliveEnemyCount = FMath::Max(AliveEnemyCount - 1, 0);
 
 	KilledEnemyCount++;
+	KilledInCurrentWave++;
 	Score += ScorePerEnemy;
+
+	const int32 CurrentWaveEnemyCount = GetCurrentWaveEnemyCount();
 
 	UE_LOG(
 		LogTemp,
 		Warning,
-		TEXT("Enemy destroyed. Alive: %d / %d | Kills: %d | Score: %d"),
+		TEXT("Enemy destroyed. Wave: %d / %d | Alive: %d / %d | Wave Kills: %d / %d | Total Kills: %d | Score: %d"),
+		CurrentWave,
+		TotalWaves,
 		AliveEnemyCount,
 		MaxAliveCount,
+		KilledInCurrentWave,
+		CurrentWaveEnemyCount,
 		KilledEnemyCount,
 		Score
 	);
+
+	if (!bAllWavesCompleted &&
+		SpawnedInCurrentWave >= CurrentWaveEnemyCount &&
+		KilledInCurrentWave >= CurrentWaveEnemyCount &&
+		AliveEnemyCount <= 0)
+	{
+		FinishCurrentWave();
+	}
 }

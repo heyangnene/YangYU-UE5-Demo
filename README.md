@@ -6,9 +6,9 @@ YangYu is a sci-fi survival demo made with Unreal Engine 5.
 
 
 
-The current version is a single-player greybox prototype.
+The current version is a single-player greybox prototype.  
 
-The player protects and repairs a core while enemies continuously attack it. The player can also be damaged by enemies and will enter a downed state when health reaches zero.
+The player protects and repairs a core while enemies attack it in waves. The player can also be damaged by enemies and will enter a downed state when health reaches zero.
 
 
 
@@ -22,11 +22,17 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 \- Enemy health and death system
 
-\- Enemy wave spawning
+\- Three-wave enemy encounter system
+
+\- Wave 1 has 5 enemies, Wave 2 has 7 enemies, and Wave 3 has 10 enemies
+
+\- Maximum alive enemy count limit to prevent too many enemies from appearing at once
 
 \- Enemies move toward and attack the core
 
 \- Enemies can damage the player when nearby
+
+\- Basic enemy aggro behavior: enemies chase nearby players before returning to the core
 
 \- Core health system
 
@@ -34,13 +40,19 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 \- Hold E to continuously repair the core
 
-\- Repairing the core disables shooting, creating a trade-off between defense and combat.
+\- Repairing the core disables shooting, creating a trade-off between defense and combat
 
-\- Invalid action hint appears when the player tries to shoot while repairing.
+\- Invalid action hint appears when the player tries to shoot while repairing
 
 \- Core health UI
 
 \- Player health UI
+
+\- Wave progress UI
+
+\- Enemy progress UI
+
+\- Score and kill count UI
 
 \- Gameplay instruction HUD
 
@@ -48,23 +60,19 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 \- Core damage feedback through red core glow
 
-\- Basic enemy aggro behavior: enemies chase nearby players before returning to the core
-
-\- Basic score and kill count system
-
 \- Player death state with PLAYER DOWN message
 
 \- Core destroyed state with CORE DESTROYED message
 
-\- Death overlay when the player is down
+\- Death overlay when the player is down or when the core is destroyed
 
 \- Mission Failed condition when the core is destroyed
 
 \- Mission Failed condition when the player is down
 
-\- Mission Success condition after surviving 60 seconds
+\- Mission Success condition after clearing all enemy waves
 
-\- Refactored HUD update logic into separate Blueprint events for core, player, score, and mission state.
+\- Refactored HUD update logic into separate Blueprint events for core, player, score, wave, and mission state
 
 
 
@@ -74,7 +82,7 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 \- Left Mouse Button: Shoot
 
-\- E: Repair Core
+\- Hold E: Repair Core
 
 
 
@@ -82,7 +90,7 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 
 
-Protect the core and survive for 60 seconds.
+Protect the core and clear all 3 enemy waves.
 
 
 
@@ -94,11 +102,11 @@ Current milestone:
 
 
 
-\*\*Demo 0.2 - Damage Feedback and Player Death State\*\*
+\*\*Demo 0.3 - Three-Wave Combat Loop\*\*
 
 
 
-This version expands the core gameplay loop with player health, enemy damage to the player, separated damage feedback for the player and the core, and a clear player down state.
+This version expands the prototype from a simple timed survival test into a structured wave-based combat loop. The player must protect the core, manage repair timing, stop enemies from overwhelming the objective, and clear all enemy waves to complete the mission.
 
 
 
@@ -106,7 +114,21 @@ The current loop is:
 
 
 
-Enemy spawning → Core attack → Player defense → Player damage → Core repair → Player down / Core destroyed / Survival success
+Enemy wave starts → Enemies attack the core → Player shoots enemies → Player repairs the core when needed → Repairing disables shooting → Player must choose between combat and repair → Clear all waves / Player down / Core destroyed
+
+
+
+\## Current Wave Setup
+
+
+
+\- Wave 1: 5 enemies
+
+\- Wave 2: 7 enemies
+
+\- Wave 3: 10 enemies
+
+\- Maximum alive enemies at the same time: 5
 
 
 
@@ -114,17 +136,17 @@ Enemy spawning → Core attack → Player defense → Player damage → Core rep
 
 
 
+\- More polished enemy AI with navigation
+
+\- Enemy attack behavior improvements
+
+\- Enemy type variations
+
 \- Player damage sound effects
 
 \- Core damage sound effects
 
 \- Low-health player warning feedback
-
-\- Enemy aggro and player-chasing behavior
-
-\- More polished enemy AI with navigation
-
-\- Wave-based mission structure
 
 \- Beacon charging objective
 
@@ -134,7 +156,13 @@ Enemy spawning → Core attack → Player defense → Player damage → Core rep
 
 \- Role-based weapons: pulse weapon, gravity device, and guardian shield/support device
 
+\- 3D character models
+
 \- Environment, weapon, and enemy visual polish
+
+\- Background and lighting improvements
+
+\- Sound effect and ambient audio improvements
 
 \- Performance profiling and optimization
 
