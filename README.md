@@ -34,6 +34,10 @@ The player protects and repairs a core while enemies continuously attack it. The
 
 \- Hold E to continuously repair the core
 
+\- Repairing the core disables shooting, creating a trade-off between defense and combat.
+
+\- Invalid action hint appears when the player tries to shoot while repairing.
+
 \- Core health UI
 
 \- Player health UI
