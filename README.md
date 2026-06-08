@@ -6,7 +6,7 @@ YangYu is a sci-fi survival demo made with Unreal Engine 5.
 
 
 
-The current version is a single-player greybox prototype.  
+The current version is a single-player greybox prototype.
 
 The player protects and repairs a core while enemies attack it in waves. The player can also be damaged by enemies and will enter a downed state when health reaches zero.
 
@@ -31,6 +31,12 @@ The player protects and repairs a core while enemies attack it in waves. The pla
 \- Enemies move toward and attack the core
 
 \- Enemies can damage the player when nearby
+
+\- Enemy base class refactored from Actor to Character for AI navigation support
+
+\- Enemy movement upgraded to AIController and NavMesh-based navigation
+
+\- Enemy death cleanup stops AI movement, disables collision, and prevents dead enemies from blocking gameplay
 
 \- Basic enemy aggro behavior: enemies chase nearby players before returning to the core
 
@@ -136,7 +142,7 @@ Enemy wave starts → Enemies attack the core → Player shoots enemies → Play
 
 
 
-\- More polished enemy AI with navigation
+\- Further enemy AI polish and behavior variation
 
 \- Enemy attack behavior improvements
 

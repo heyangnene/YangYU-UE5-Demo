@@ -14,9 +14,10 @@ public class YangYu : ModuleRules
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
-			"AIModule",
-			"StateTreeModule",
-			"GameplayStateTreeModule",
+            "AIModule",
+            "NavigationSystem",
+            "StateTreeModule",
+            "GameplayStateTreeModule",
 			"UMG",
 			"Slate"
 		});

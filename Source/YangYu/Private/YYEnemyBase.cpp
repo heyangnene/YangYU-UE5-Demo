@@ -3,29 +3,33 @@
 #include "YYCoreObjective.h"
 #include "YYHealthComponent.h"
 
-#include "Components/BoxComponent.h"
+#include "AIController.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AYYEnemyBase::AYYEnemyBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
-	RootComponent = CollisionBox;
+	AIControllerClass = AAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-	CollisionBox->SetBoxExtent(FVector(40.0f, 40.0f, 90.0f));
-	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	CollisionBox->SetCollisionObjectType(ECC_Pawn);
-	CollisionBox->SetCollisionResponseToAllChannels(ECR_Block);
+	GetCapsuleComponent()->InitCapsuleSize(40.0f, 90.0f);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
-	// Avoid enemies blocking or pushing the player / each other too aggressively.
-	CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
 	EnemyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EnemyMesh"));
 	EnemyMesh->SetupAttachment(RootComponent);
 	EnemyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	EnemyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+	EnemyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	EnemyMesh->SetRelativeScale3D(FVector(0.8f, 0.8f, 1.8f));
 
 	HealthComponent = CreateDefaultSubobject<UYYHealthComponent>(TEXT("HealthComponent"));
@@ -34,6 +38,11 @@ AYYEnemyBase::AYYEnemyBase()
 void AYYEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!GetController())
+	{
+		SpawnDefaultController();
+	}
 
 	if (HealthComponent)
 	{
@@ -173,6 +182,11 @@ void AYYEnemyBase::MoveToTarget(float DeltaTime)
 		return;
 	}
 
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+	}
+
 	AActor* MoveTarget = GetCurrentMoveTarget();
 
 	if (!MoveTarget)
@@ -180,36 +194,50 @@ void AYYEnemyBase::MoveToTarget(float DeltaTime)
 		return;
 	}
 
+	AAIController* AIController = Cast<AAIController>(GetController());
+
+	if (!AIController)
+	{
+		return;
+	}
+
 	const bool bMovingToPlayer = MoveTarget == PlayerTargetActor;
 
-	const FVector CurrentLocation = GetActorLocation();
 	const FVector TargetLocation = bMovingToPlayer
 		? MoveTarget->GetActorLocation()
 		: MoveTarget->GetActorLocation() + TargetOffset;
-
-	FVector Direction = TargetLocation - CurrentLocation;
-	Direction.Z = 0.0f;
-
-	const float Distance = Direction.Size();
 
 	const float CurrentStopDistance = bMovingToPlayer
 		? PlayerAttackDistance * 0.8f
 		: StopDistance;
 
+	const float Distance = FVector::Dist2D(GetActorLocation(), TargetLocation);
+
 	if (Distance <= CurrentStopDistance)
 	{
+		AIController->StopMovement();
 		return;
 	}
 
-	Direction.Normalize();
+	AIController->MoveToLocation(
+		TargetLocation,
+		CurrentStopDistance,
+		true,
+		true,
+		true,
+		false,
+		nullptr,
+		true
+	);
 
-	const FVector NewLocation = CurrentLocation + Direction * MoveSpeed * DeltaTime;
+	FVector Direction = TargetLocation - GetActorLocation();
+	Direction.Z = 0.0f;
 
-	FHitResult HitResult;
-	SetActorLocation(NewLocation, true, &HitResult);
-
-	const FRotator DirectionRotation = Direction.Rotation();
-	SetActorRotation(FRotator(0.0f, DirectionRotation.Yaw, 0.0f));
+	if (!Direction.IsNearlyZero())
+	{
+		const FRotator DirectionRotation = Direction.Rotation();
+		SetActorRotation(FRotator(0.0f, DirectionRotation.Yaw, 0.0f));
+	}
 }
 
 void AYYEnemyBase::TryAttackTarget(float DeltaTime)
@@ -282,6 +310,32 @@ void AYYEnemyBase::TryAttackTarget(float DeltaTime)
 
 void AYYEnemyBase::HandleDeath()
 {
+	AAIController* AIController = Cast<AAIController>(GetController());
+
+	if (AIController)
+	{
+		AIController->StopMovement();
+		AIController->UnPossess();
+	}
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->DisableMovement();
+	}
+
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	if (EnemyMesh)
+	{
+		EnemyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	SetActorTickEnabled(false);
+
 	if (DestroyDelay <= 0.0f)
 	{
 		Destroy();

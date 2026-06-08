@@ -1,15 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "YYEnemyBase.generated.h"
 
 class UStaticMeshComponent;
-class UBoxComponent;
 class UYYHealthComponent;
 
 UCLASS()
-class YANGYU_API AYYEnemyBase : public AActor
+class YANGYU_API AYYEnemyBase : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -19,9 +18,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy")
-	UBoxComponent* CollisionBox;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy")
 	UStaticMeshComponent* EnemyMesh;
