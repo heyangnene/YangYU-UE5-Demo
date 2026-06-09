@@ -247,6 +247,11 @@ void AYYEnemyBase::TryAttackTarget(float DeltaTime)
 		return;
 	}
 
+	if (bIsPreparingAttack)
+	{
+		return;
+	}
+
 	if (AttackCooldown > 0.0f)
 	{
 		AttackCooldown -= DeltaTime;
@@ -277,12 +282,6 @@ void AYYEnemyBase::TryAttackTarget(float DeltaTime)
 	if (bIsAttackingPlayer)
 	{
 		TargetHealthComponent = GetPlayerHealthComponent();
-
-		if (!TargetHealthComponent)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Enemy tried to attack player, but PlayerHealthComponent was not found."));
-			return;
-		}
 	}
 	else
 	{
@@ -294,22 +293,112 @@ void AYYEnemyBase::TryAttackTarget(float DeltaTime)
 		return;
 	}
 
-	TargetHealthComponent->ApplyDamage(CurrentAttackDamage);
+	AAIController* AIController = Cast<AAIController>(GetController());
+
+	if (AIController)
+	{
+		AIController->StopMovement();
+	}
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+
+	bIsPreparingAttack = true;
+	PendingAttackTarget = AttackTarget;
+	PendingAttackDamage = CurrentAttackDamage;
+
+	GetWorldTimerManager().SetTimer(
+		AttackWindUpTimerHandle,
+		this,
+		&AYYEnemyBase::ExecutePreparedAttack,
+		AttackWindUpTime,
+		false
+	);
 
 	if (bIsAttackingPlayer)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy attacked player: %.1f damage"), CurrentAttackDamage);
+		UE_LOG(LogTemp, Warning, TEXT("Enemy is preparing to attack player."));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy attacked core: %.1f damage"), CurrentAttackDamage);
+		UE_LOG(LogTemp, Warning, TEXT("Enemy is preparing to attack core."));
 	}
+}
+
+void AYYEnemyBase::ExecutePreparedAttack()
+{
+	bIsPreparingAttack = false;
+
+	if (!HealthComponent || HealthComponent->IsDead())
+	{
+		PendingAttackTarget = nullptr;
+		PendingAttackDamage = 0.0f;
+		return;
+	}
+
+	if (!PendingAttackTarget)
+	{
+		PendingAttackDamage = 0.0f;
+		return;
+	}
+
+	const bool bIsAttackingPlayer = PendingAttackTarget == PlayerTargetActor;
+
+	const float CurrentAttackDistance = bIsAttackingPlayer ? PlayerAttackDistance : AttackDistance;
+	const float Distance = FVector::Dist2D(GetActorLocation(), PendingAttackTarget->GetActorLocation());
+
+	if (Distance > CurrentAttackDistance)
+	{
+		PendingAttackTarget = nullptr;
+		PendingAttackDamage = 0.0f;
+		return;
+	}
+
+	UYYHealthComponent* TargetHealthComponent = nullptr;
+
+	if (bIsAttackingPlayer)
+	{
+		TargetHealthComponent = GetPlayerHealthComponent();
+	}
+	else
+	{
+		TargetHealthComponent = PendingAttackTarget->FindComponentByClass<UYYHealthComponent>();
+	}
+
+	if (!TargetHealthComponent || TargetHealthComponent->IsDead())
+	{
+		PendingAttackTarget = nullptr;
+		PendingAttackDamage = 0.0f;
+		return;
+	}
+
+	TargetHealthComponent->ApplyDamage(PendingAttackDamage);
+
+	if (bIsAttackingPlayer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy attacked player after wind-up: %.1f damage"), PendingAttackDamage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy attacked core after wind-up: %.1f damage"), PendingAttackDamage);
+	}
+
+	PendingAttackTarget = nullptr;
+	PendingAttackDamage = 0.0f;
 
 	AttackCooldown = AttackInterval;
 }
 
 void AYYEnemyBase::HandleDeath()
 {
+	GetWorldTimerManager().ClearTimer(AttackWindUpTimerHandle);
+
+	bIsPreparingAttack = false;
+	PendingAttackTarget = nullptr;
+	PendingAttackDamage = 0.0f;
+	
 	AAIController* AIController = Cast<AAIController>(GetController());
 
 	if (AIController)

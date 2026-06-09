@@ -44,6 +44,20 @@ protected:
 	float AttackInterval = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
+	float AttackWindUpTime = 0.3f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
+	bool bIsPreparingAttack = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
+	AActor* PendingAttackTarget = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
+	float PendingAttackDamage = 0.0f;
+
+	FTimerHandle AttackWindUpTimerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
 	float PlayerAttackDistance = 220.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
@@ -84,6 +98,8 @@ protected:
 	void MoveToTarget(float DeltaTime);
 
 	void TryAttackTarget(float DeltaTime);
+
+	void ExecutePreparedAttack();
 
 	AActor* GetCurrentMoveTarget() const;
 
