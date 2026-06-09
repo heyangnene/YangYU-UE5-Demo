@@ -38,6 +38,10 @@ The player protects and repairs a core while enemies attack it in waves. The pla
 
 \- Enemy death cleanup stops AI movement, disables collision, and prevents dead enemies from blocking gameplay
 
+\- Enemy attacks now use a short wind-up before applying damage, making combat timing more readable
+
+\- Mission end state now locks player input and pauses gameplay after success or failure
+
 \- Basic enemy aggro behavior: enemies chase nearby players before returning to the core
 
 \- Core health system
@@ -108,13 +112,11 @@ Current milestone:
 
 
 
-\*\*Demo 0.3 - Three-Wave Combat Loop\*\*
+\*\*Demo 0.4 - AI Navigation and Combat Loop Polish\*\*
 
 
 
-This version expands the prototype from a simple timed survival test into a structured wave-based combat loop. The player must protect the core, manage repair timing, stop enemies from overwhelming the objective, and clear all enemy waves to complete the mission.
-
-
+This version improves the enemy AI behavior and overall mission loop. Enemies now use Character-based AI navigation with NavMesh movement, attack wind-up timing, and cleaner death handling. The mission end state now locks player input and pauses gameplay after success or failure.
 
 The current loop is:
 
