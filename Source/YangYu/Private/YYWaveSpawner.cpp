@@ -2,22 +2,48 @@
 
 #include "YYEnemyBase.h"
 #include "Engine/World.h"
+#include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 
 AYYWaveSpawner::AYYWaveSpawner()
 {
 	PrimaryActorTick.bCanEverTick = false;
+
+	bReplicates = true;
+	SetReplicateMovement(false);
 }
 
 void AYYWaveSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
-	StartSpawning();
+	if (HasAuthority())
+	{
+		StartSpawning();
+	}
+}
+
+void AYYWaveSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AYYWaveSpawner, AliveEnemyCount);
+	DOREPLIFETIME(AYYWaveSpawner, KilledEnemyCount);
+	DOREPLIFETIME(AYYWaveSpawner, Score);
+	DOREPLIFETIME(AYYWaveSpawner, TotalWaves);
+	DOREPLIFETIME(AYYWaveSpawner, CurrentWave);
+	DOREPLIFETIME(AYYWaveSpawner, SpawnedInCurrentWave);
+	DOREPLIFETIME(AYYWaveSpawner, KilledInCurrentWave);
+	DOREPLIFETIME(AYYWaveSpawner, bAllWavesCompleted);
 }
 
 void AYYWaveSpawner::StartSpawning()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	if (!EnemyClass)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("WaveSpawner has no EnemyClass assigned."));
@@ -43,6 +69,11 @@ void AYYWaveSpawner::StartSpawning()
 
 void AYYWaveSpawner::StopSpawning()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	GetWorldTimerManager().ClearTimer(SpawnTimerHandle);
 	GetWorldTimerManager().ClearTimer(WaveBreakTimerHandle);
 
@@ -51,6 +82,11 @@ void AYYWaveSpawner::StopSpawning()
 
 void AYYWaveSpawner::StartNextWave()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	if (bAllWavesCompleted)
 	{
 		return;
@@ -91,6 +127,11 @@ void AYYWaveSpawner::StartNextWave()
 
 void AYYWaveSpawner::FinishCurrentWave()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	GetWorldTimerManager().ClearTimer(SpawnTimerHandle);
 
 	UE_LOG(
@@ -156,6 +197,11 @@ FVector AYYWaveSpawner::GetRandomSpawnLocation() const
 
 void AYYWaveSpawner::SpawnEnemy()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	if (!EnemyClass)
 	{
 		return;
@@ -235,6 +281,11 @@ void AYYWaveSpawner::SpawnEnemy()
 
 void AYYWaveSpawner::HandleSpawnedEnemyDestroyed(AActor* DestroyedActor)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	AliveEnemyCount = FMath::Max(AliveEnemyCount - 1, 0);
 
 	KilledEnemyCount++;

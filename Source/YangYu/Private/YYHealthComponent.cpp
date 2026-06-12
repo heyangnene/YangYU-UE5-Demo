@@ -1,8 +1,12 @@
 #include "YYHealthComponent.h"
 
+#include "Net/UnrealNetwork.h"
+
 UYYHealthComponent::UYYHealthComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+
+	SetIsReplicatedByDefault(true);
 }
 
 void UYYHealthComponent::BeginPlay()
@@ -12,6 +16,20 @@ void UYYHealthComponent::BeginPlay()
 	CurrentHealth = MaxHealth;
 	bIsDead = false;
 
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+}
+
+void UYYHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UYYHealthComponent, MaxHealth);
+	DOREPLIFETIME(UYYHealthComponent, CurrentHealth);
+	DOREPLIFETIME(UYYHealthComponent, bIsDead);
+}
+
+void UYYHealthComponent::OnRep_CurrentHealth()
+{
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
 

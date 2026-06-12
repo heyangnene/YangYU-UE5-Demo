@@ -32,19 +32,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawner")
 	float SpawnHeightOffset = 90.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawner")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Spawner")
 	int32 AliveEnemyCount = 0;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Score")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Score")
 	int32 KilledEnemyCount = 0;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Score")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Score")
 	int32 Score = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Score")
 	int32 ScorePerEnemy = 100;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Replicated, Category = "Wave")
 	int32 TotalWaves = 3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
@@ -59,16 +59,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
 	float WaveBreakTime = 5.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Wave")
 	int32 CurrentWave = 0;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Wave")
 	int32 SpawnedInCurrentWave = 0;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Wave")
 	int32 KilledInCurrentWave = 0;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Wave")
 	bool bAllWavesCompleted = false;
 
 	FTimerHandle SpawnTimerHandle;
@@ -89,6 +89,8 @@ protected:
 	int32 GetCurrentWaveEnemyCount() const;
 
 public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(BlueprintCallable, Category = "Spawner")
 	void StartSpawning();
 
