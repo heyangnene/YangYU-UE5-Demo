@@ -8,6 +8,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerController.h"
 
 AYYEnemyBase::AYYEnemyBase()
 {
@@ -68,10 +69,7 @@ void AYYEnemyBase::Tick(float DeltaTime)
 		}
 	}
 
-	if (!PlayerTargetActor)
-	{
-		FindPlayerTarget();
-	}
+	FindPlayerTarget();
 
 	UpdateAggroState();
 
@@ -86,7 +84,63 @@ void AYYEnemyBase::FindCoreTarget()
 
 void AYYEnemyBase::FindPlayerTarget()
 {
-	PlayerTargetActor = UGameplayStatics::GetPlayerPawn(this, 0);
+	PlayerTargetActor = nullptr;
+
+	UWorld* World = GetWorld();
+
+	if (!World)
+	{
+		return;
+	}
+
+	float ClosestDistance = TNumericLimits<float>::Max();
+	AActor* ClosestAlivePlayer = nullptr;
+
+	for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+	{
+		APlayerController* PlayerController = It->Get();
+
+		if (!PlayerController)
+		{
+			continue;
+		}
+
+		APawn* PlayerPawn = PlayerController->GetPawn();
+
+		if (!PlayerPawn)
+		{
+			continue;
+		}
+
+		TArray<UYYHealthComponent*> HealthComponents;
+		PlayerPawn->GetComponents<UYYHealthComponent>(HealthComponents);
+
+		UYYHealthComponent* PlayerHealthComponent = nullptr;
+
+		for (UYYHealthComponent* Component : HealthComponents)
+		{
+			if (Component && Component->GetFName() == TEXT("PlayerHealthComponent"))
+			{
+				PlayerHealthComponent = Component;
+				break;
+			}
+		}
+
+		if (!PlayerHealthComponent || PlayerHealthComponent->IsDead())
+		{
+			continue;
+		}
+
+		const float Distance = FVector::Dist2D(GetActorLocation(), PlayerPawn->GetActorLocation());
+
+		if (Distance < ClosestDistance)
+		{
+			ClosestDistance = Distance;
+			ClosestAlivePlayer = PlayerPawn;
+		}
+	}
+
+	PlayerTargetActor = ClosestAlivePlayer;
 }
 
 void AYYEnemyBase::GenerateTargetOffset()
@@ -125,6 +179,8 @@ void AYYEnemyBase::UpdateAggroState()
 {
 	bIsChasingPlayer = false;
 
+	FindPlayerTarget();
+
 	if (!PlayerTargetActor)
 	{
 		return;
@@ -134,6 +190,7 @@ void AYYEnemyBase::UpdateAggroState()
 
 	if (!PlayerHealthComponent || PlayerHealthComponent->IsDead())
 	{
+		PlayerTargetActor = nullptr;
 		return;
 	}
 

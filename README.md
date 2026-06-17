@@ -36,6 +36,8 @@ The player protects and repairs a core while enemies attack it in waves. The pla
 
 \- Enemy movement upgraded to AIController and NavMesh-based navigation
 
+\- Enemy AI now targets the nearest alive player in multiplayer instead of only targeting Player 0
+
 \- Enemy death cleanup stops AI movement, disables collision, and prevents dead enemies from blocking gameplay
 
 \- Enemy attacks now use a short wind-up before applying damage, making combat timing more readable
