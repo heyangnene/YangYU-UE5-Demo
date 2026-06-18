@@ -2,6 +2,8 @@
 
 #include "YYEnemyBase.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
+#include "NavigationSystem.h"
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 
@@ -230,15 +232,69 @@ void AYYWaveSpawner::SpawnEnemy()
 		return;
 	}
 
+	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+
+	if (!NavSystem)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("WaveSpawner could not find NavigationSystem."));
+		return;
+	}
+
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride =
-		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-	constexpr int32 MaxAttempts = 10;
+	constexpr int32 MaxAttempts = 20;
+	constexpr float MinDistanceFromOtherEnemies = 180.0f;
 
 	for (int32 AttemptIndex = 0; AttemptIndex < MaxAttempts; AttemptIndex++)
 	{
-		const FVector SpawnLocation = GetRandomSpawnLocation();
+		const FVector RandomLocation = GetRandomSpawnLocation();
+
+		FNavLocation ProjectedNavLocation;
+
+		const bool bFoundNavLocation = NavSystem->ProjectPointToNavigation(
+			RandomLocation,
+			ProjectedNavLocation,
+			FVector(250.0f, 250.0f, 300.0f)
+		);
+
+		if (!bFoundNavLocation)
+		{
+			continue;
+		}
+
+		const FVector SpawnLocation = ProjectedNavLocation.Location + FVector(0.0f, 0.0f, SpawnHeightOffset);
+
+		bool bTooCloseToExistingEnemy = false;
+
+		TArray<AActor*> ExistingEnemies;
+		UGameplayStatics::GetAllActorsOfClass(this, AYYEnemyBase::StaticClass(), ExistingEnemies);
+
+		for (AActor* ExistingEnemy : ExistingEnemies)
+		{
+			if (!ExistingEnemy)
+			{
+				continue;
+			}
+
+			const float DistanceToExistingEnemy = FVector::Dist2D(
+				SpawnLocation,
+				ExistingEnemy->GetActorLocation()
+			);
+
+			if (DistanceToExistingEnemy < MinDistanceFromOtherEnemies)
+			{
+				bTooCloseToExistingEnemy = true;
+				break;
+			}
+		}
+
+		if (bTooCloseToExistingEnemy)
+		{
+			continue;
+		}
+
 		const FRotator SpawnRotation = GetActorRotation();
 
 		AYYEnemyBase* SpawnedEnemy = GetWorld()->SpawnActor<AYYEnemyBase>(
@@ -258,7 +314,7 @@ void AYYWaveSpawner::SpawnEnemy()
 			UE_LOG(
 				LogTemp,
 				Warning,
-				TEXT("Enemy spawned. Wave: %d / %d | Spawned: %d / %d | Alive: %d / %d"),
+				TEXT("Enemy spawned on NavMesh. Wave: %d / %d | Spawned: %d / %d | Alive: %d / %d"),
 				CurrentWave,
 				TotalWaves,
 				SpawnedInCurrentWave,
@@ -276,7 +332,7 @@ void AYYWaveSpawner::SpawnEnemy()
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("WaveSpawner failed to spawn enemy after several attempts."));
+	UE_LOG(LogTemp, Warning, TEXT("WaveSpawner failed to spawn enemy on valid NavMesh after several attempts."));
 }
 
 void AYYWaveSpawner::HandleSpawnedEnemyDestroyed(AActor* DestroyedActor)
