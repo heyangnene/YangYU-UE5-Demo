@@ -6,7 +6,7 @@ YangYu is a sci-fi cooperative survival demo made with Unreal Engine 5.
 
 
 
-The current version is a greybox-to-environment prototype built inside a sci-fi space station combat map. The player protects and repairs a large reactor-style core while enemies attack it in waves. The demo supports a complete single-player combat loop and basic two-player listen-server multiplayer synchronization.
+The current version is a greybox-to-environment prototype built inside a sci-fi space station combat map. The player protects and repairs a large reactor-style core while alien enemies attack it in waves. The demo supports a complete single-player combat loop and basic two-player listen-server multiplayer synchronization.
 
 
 
@@ -41,6 +41,18 @@ The current version is a greybox-to-environment prototype built inside a sci-fi 
 \* Enemy attacks use a short wind-up before applying damage, making combat timing more readable
 
 \* Enemy death cleanup stops AI movement, disables collision, and prevents dead enemies from blocking gameplay
+
+\* Enemy placeholder mesh has been replaced with an alien predator skeletal mesh
+
+\* Enemy visual mesh uses the existing Character Capsule for collision to keep AI navigation stable
+
+\* Enemy skeletal mesh collision is disabled to prevent long limbs from blocking navigation or causing wall collisions
+
+\* Basic enemy animation state machine added
+
+\* Enemy animation switches between standing and movement states based on movement speed
+
+\* Enemy attack wind-up now has a clearer visual body motion before damage is applied
 
 \* Core health system
 
@@ -222,11 +234,11 @@ Current milestone:
 
 
 
-\*\*Demo 0.7 - Space Station Environment and Starfield Polish\*\*
+\*\*Demo 0.8 - Alien Enemy Visual and Animation Polish\*\*
 
 
 
-This version moves the main combat loop into a new sci-fi space station environment and adds an exposed starfield view above the enemy attack route. The original core defense gameplay, multiplayer synchronization, enemy waves, repair system, and HUD remain functional while the level layout, core visuals, enemy navigation path, spawn stability, and environmental atmosphere were rebuilt for the new map.
+This version replaces the original placeholder enemy block with an alien predator skeletal mesh and adds a basic animation state machine for enemy movement. The original enemy AI, health, attack wind-up, wave spawning, multiplayer synchronization, and death cleanup logic were preserved while the enemy visual presentation was improved. The enemy still uses a simple Character Capsule for collision and navigation, while the skeletal mesh is used only for visual appearance.
 
 
 
@@ -234,7 +246,41 @@ The current loop is:
 
 
 
-Enemy wave starts → Enemies move through the space station toward the core → Players shoot enemies → Players repair the core when needed → Repairing disables shooting → Players must choose between combat and repair → Clear all waves / Player down / Core destroyed
+Enemy wave starts → Alien enemies move through the space station toward the core → Players shoot enemies → Players repair the core when needed → Repairing disables shooting → Players must choose between combat and repair → Clear all waves / Player down / Core destroyed
+
+
+
+\## Performance Analysis
+
+
+
+During multiplayer PIE testing, the project encountered rendering and video memory pressure after integrating the high-detail space station environment, starfield background, and alien skeletal enemy model. Unreal Engine reported video memory exhaustion, and the frame rate dropped significantly during two-player Listen Server testing.
+
+
+
+The issue was analyzed using Unreal Engine profiling commands such as `stat fps`, `stat unit`, and `stat gpu`. The profiling results showed that the main bottleneck was GPU rendering and video memory usage rather than enemy AI, wave logic, or multiplayer gameplay code.
+
+
+
+Optimization steps included:
+
+
+
+\* Reducing scalability settings during multiplayer testing
+
+\* Keeping PIE test windows at a smaller resolution
+
+\* Increasing the temporary texture streaming pool using `r.Streaming.PoolSize 2000`
+
+\* Disabling unnecessary collision on visual-only meshes
+
+\* Keeping enemy navigation collision on the simple Character Capsule instead of the skeletal mesh
+
+\* Preserving gameplay logic while lowering rendering pressure for stable testing
+
+
+
+After optimization, two-player PIE testing became stable again, with the frame rate returning to 60 FPS during the test scenario.
 
 
 
@@ -244,7 +290,9 @@ Enemy wave starts → Enemies move through the space station toward the core →
 
 \* Further enemy AI polish and behavior variation
 
-\* Enemy attack behavior improvements
+\* Further enemy animation polish
+
+\* More advanced enemy attack animations
 
 \* Enemy type variations
 
@@ -261,8 +309,6 @@ Enemy wave starts → Enemies move through the space station toward the core →
 \* Role-based weapons: pulse weapon, gravity device, and guardian shield/support device
 
 \* 3D character models
-
-\* Enemy model replacement
 
 \* Player full-body model for multiplayer visibility
 
@@ -283,6 +329,8 @@ Enemy wave starts → Enemies move through the space station toward the core →
 \* Sci-fi space station environment asset from Fab
 
 \* Starfield background asset from Fab: Starfield FREE by Nebulosity
+
+\* Alien enemy character asset from Fab: TEUTHISAN | Alien Predator (FREE) by Aaron Sims Creative
 
 
 
