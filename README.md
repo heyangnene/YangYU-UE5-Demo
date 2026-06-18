@@ -98,6 +98,12 @@ The current version is a greybox-to-environment prototype built inside a sci-fi 
 
 \* Enemy spawn spacing checks reduce overlapping enemies at the spawn point
 
+\* Added an exposed starfield view above the enemy attack route
+
+\* Removed selected ceiling panels from the enemy route hall to reveal outer space
+
+\* Starfield background added using the Starfield FREE asset from Fab
+
 
 
 \## Multiplayer Features
@@ -216,11 +222,11 @@ Current milestone:
 
 
 
-\*\*Demo 0.6 - Sci-Fi Space Station Combat Map Integration\*\*
+\*\*Demo 0.7 - Space Station Environment and Starfield Polish\*\*
 
 
 
-This version moves the main combat loop into a new sci-fi space station environment. The original core defense gameplay, multiplayer synchronization, enemy waves, repair system, and HUD remain functional while the level layout, core visuals, enemy navigation path, and spawn stability were rebuilt for the new map.
+This version moves the main combat loop into a new sci-fi space station environment and adds an exposed starfield view above the enemy attack route. The original core defense gameplay, multiplayer synchronization, enemy waves, repair system, and HUD remain functional while the level layout, core visuals, enemy navigation path, spawn stability, and environmental atmosphere were rebuilt for the new map.
 
 
 
@@ -262,13 +268,21 @@ Enemy wave starts → Enemies move through the space station toward the core →
 
 \* Environment, weapon, and enemy visual polish
 
-\* Exposed space / starfield view in the combat map
-
 \* Background and lighting improvements
 
 \* Sound effect and ambient audio improvements
 
 \* Performance profiling and optimization
+
+
+
+\## Third-Party Assets
+
+
+
+\* Sci-fi space station environment asset from Fab
+
+\* Starfield background asset from Fab: Starfield FREE by Nebulosity
 
 
 
