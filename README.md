@@ -80,7 +80,9 @@ The current version is a greybox-to-environment prototype built inside a sci-fi 
 
 \* In multiplayer, a downed player is locally locked while the other player can continue playing
 
-\* Refactored HUD update logic into separate Blueprint events for core, player, score, wave, and mission state
+\* Refactored HUD update logic into separate Blueprint events for core, player, score, wave, and mission state 
+
+\* Player third-person placeholder mesh has been replaced with a sci-fi armored Wraith character model for multiplayer visibility
 
 
 
@@ -139,6 +141,12 @@ The current version is a greybox-to-environment prototype built inside a sci-fi 
 \* Wave progress, enemy progress, team score, and team kills are replicated from the Server
 
 \* Server controls enemy spawning, enemy AI, wave progression, core health, and team score
+
+\* Remote player body visibility has been improved using the Wraith character mesh
+
+\* Local first-person arms are preserved for the owning player, while other players see the Wraith body mesh
+
+\* Client projectile firing now sends camera location and rotation to the Server, allowing projectile direction to correctly follow the Client's view angle
 
 
 
